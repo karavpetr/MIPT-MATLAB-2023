@@ -1,2 +1,9 @@
 # MIPT-MATLAB-2023
-Educational course of Maths + MATLAB within 3 course in MIPT (barchelor, Chair of Systems and Decision Analysis ).
+
+Educational course of Maths + MATLAB within 3 course in MIPT (barchelor, Chair of Systems and Decision Analysis).
+
+---
+
+Материалы соответствуют курсу "Вычислительный практикум" Московского физико-технического института, который преподаётся на кафедре анализа систем и решений на 3 курсе бакалавриата.
+
+В рамках курса подразумевалось решение вычислительных (математических) задач с помощью MATLAB (а также освоение этого языка программирования). Задания были сгруппированы в 4 лабораторные работы. 
