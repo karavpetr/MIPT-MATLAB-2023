@@ -1,0 +1,383 @@
+% cd /home/karavpetr/Desktop/MATLAB
+
+%% Задание 1
+clear
+
+%----Parameters-----------
+f = @(x) x .* sin(1 ./ x.^2);
+a = 0.2;
+b = 1.2;
+
+x = linspace(a, b, 11);
+xx = linspace(a, b, 101);
+%----End of parameters----
+
+compareInterp(x,xx,f);
+
+%% Задание 3
+clear
+format compact
+
+%----Parameters-----------
+f = @(x) x;
+fn = @(n,x) n * atan(x ./ n);
+
+a = 1;
+b = 2;
+n = 10;  % Number of frames
+%----End of parameters----
+
+% possible parameters: pointwise, uniform, rms
+convergenceFunc(fn, f, a, b, n, 'rms');
+
+
+%% Задание 4
+clear
+
+%----Parameters-----------
+f = @(x) (x<-0.2).*(-1) + (x>=-0.2).*(x<=0.2) .*x ./ 0.2  + (x>0.2).*1;
+n = 25;
+%----End of parameters----
+
+chebApprox(f, n);
+
+
+%% Задание 6
+clear
+
+%----Parameters-----------
+r = 5.11;
+f = @(x) r*x.*(1-sqrt(x));
+x0 = 0.01;
+number_of_frames = 10;
+%----End of parameters----
+
+x = linspace(0,1,100);
+
+Video1(1:number_of_frames) = struct("cdata", [], "colormap", []);
+fig = figure;
+
+xlabel('x');
+ylabel('y = f(x)');
+
+x_prev = x0;
+for i=1:number_of_frames
+    hold on;
+    x_next = f(x_prev);
+    plot([x_prev, x_next], [x_next, x_next], 'r-', 'linewidth', 1);
+    plot([x_prev, x_prev], [x_prev, x_next], 'r-', 'linewidth', 1);
+    x_prev = x_next;
+    
+    drawing_1 = plot(x, f(x), 'b-', 'linewidth', 2);
+    drawing_2 = plot(x, x, 'k--', 'linewidth', 1);
+    legend([drawing_1, drawing_2], {'f(x)', 'y = x'});
+    title(sprintf('Ход приближений: (frame #%d/%d)', i, number_of_frames));
+    
+    hold off;
+    pause(0.3);
+    Video1(i) = getframe(gcf);
+end
+pause(1);
+close(fig);
+
+vidObj = VideoWriter('./IterativAprox.avi');
+vidObj.FrameRate = 5;
+vidObj.Quality = 100;
+open(vidObj);
+writeVideo(vidObj, Video1);
+close(vidObj);
+
+
+%% Задание 7
+clear
+
+%----Parameters-----------
+x_min = -1;
+x_max = 1;
+y_min = -2;
+y_max = 2;
+
+n = 10; %number of molecues
+
+delta_time = 0.01;
+time_duration = 10;
+%----End of parameters----
+
+% start features of molecules
+x = x_min + (x_max - x_min) * rand(n,1);
+y = y_min + (y_max - y_min) * rand(n,1);
+vx = randn(n,1);
+vy = randn(n,1);
+
+fig = figure;
+for t = 0:delta_time:time_duration
+    hold on;
+    drawing = plot(x, y, 'ro');
+    
+    xlim([x_min, x_max]);
+    ylim([y_min, y_max]);
+    
+    % Updating positions
+    x = x + vx * delta_time;
+    y = y + vy * delta_time;
+    
+    % Check for collisions with the walls
+    x_bad_points = find((x < x_min) | (x > x_max));
+    vx(x_bad_points) = -vx(x_bad_points);
+    y_bad_points = find((y < y_min) | (y > y_max));
+    vy(y_bad_points) = -vy(y_bad_points);
+
+    drawnow;
+    hold off;
+    
+    pause(delta_time);
+    delete(drawing);
+end
+close(fig);
+
+
+%% Задание 8
+clear
+
+% Задание 8.1
+
+data = readtable('incomes.csv', 'Delimiter', ';');
+
+income_data = table2array(data(:, 2:end));
+income_data = strrep(income_data, ',', '.');
+income_data = str2double(income_data);
+
+names = data.Properties.VariableNames;
+dates = datetime(data.("Date"), 'InputFormat', 'dd.MM.yyyy');
+total_income_data = sum(income_data, 2);
+
+plot(dates, total_income_data);
+title('Total income data in all regions');
+xlabel('Date');
+ylabel('Total income (in billions of rubles)');
+
+table_for_file = table(dates, total_income_data);
+writetable(table_for_file, 'inc.txt');
+
+%% Задание 8.2
+
+years = year(dates);
+%regions = ["Belgorodskaya_oblast", "Bryanskaya_oblast", "Vladimirskaya_oblast", "Lipetskaya_oblast", "Respublica_Dagestan", "Kemerovskaya_oblast", "Novosibirskaya_oblast"];
+regions = ["Sahalinskaya_oblast", "Evreyskaya_avt_oblast", "Chukotskiy_avt_okrug"];
+regions_names = strrep(regions, '_', ' ');
+
+unique_years = unique(years);
+total_incomes = zeros([length(unique_years) length(regions)]);
+min_indeces = zeros([length(unique_years) length(regions)]);
+max_indeces = zeros([length(unique_years) length(regions)]);
+
+for n = 1:length(unique_years)
+    for i = 1:length(regions)
+        regionData = data.(regions(i));
+        regionData = strrep(regionData, ',', '.');
+        regionData = str2double(regionData);
+        year_indeces = find(years == years(n));
+        total_incomes(n, i) = sum(regionData(year_indeces));
+    end
+end
+
+figure;
+hold on;
+b = bar(unique_years, total_incomes);
+legend(regions_names);
+for n = 1:length(unique_years)
+    incomes = total_incomes(n, :);
+    min_indeces = find(incomes == min(incomes));
+    %set(b(min_indeces(1)),'Selected', true);
+    max_indeces = find(incomes == max(incomes));
+    %set(b(max_indeces(1)),'Selected', true);
+    
+    %a = b(min_indeces(1)).CData;
+    b(min_indeces(1)).FaceColor = 'flat';
+    b(min_indeces(1)).CData(n, :) = [1 1 1];
+    b(max_indeces(1)).FaceColor = 'flat';
+    b(max_indeces(1)).CData(n, :) = [0 0 0];
+end
+%hT = [];
+%for k = 1:length(b)
+    %hT=[hT,text(b(k).XData+b(k).XOffset,b(k).YData, "Text")];
+    %hT=[hT text(b(k).XData+b(k).XOffset, b(k).YData, num2str(b(k).YData.', '%.3f'))];
+%end
+%xt = get(gca, 'XTick');
+xlabel('year');
+ylabel('Total income');
+title('Total incomes of different regions');
+hold off;
+
+%% Задание 8.3
+
+year2020_indices = find(years == 2020);
+
+shares = zeros(1, length(regions));
+
+for i = 1:length(regions)
+    regionData = data.(regions(i));
+    regionData = strrep(regionData, ',', '.');
+    regionData = str2double(regionData);
+    shares(i) = sum(regionData(year2020_indices));
+end
+
+figure;
+pie(shares, regions_names);
+title('Total incomes of regions in 2020');
+
+
+%% Задание 2.8
+clear
+
+% 1
+
+data = readtable('incomes.csv', 'Delimiter', ';');
+
+income_data = table2array(data(:, 2:end));
+income_data = strrep(income_data, ',', '.');
+income_data = str2double(income_data);
+
+names = data.Properties.VariableNames;
+dates = datetime(data.("Date"), 'InputFormat', 'dd.MM.yyyy');
+total_income_data = sum(income_data, 2);
+
+plot(dates, total_income_data);
+title('Total income data in all regions');
+xlabel('Date');
+ylabel('Total income (in billions of rubles)');
+
+table_for_file = table(dates, total_income_data);
+writetable(table_for_file, 'inc.txt');
+
+%% 2
+
+years = year(dates);
+%regions = ["Belgorodskaya_oblast", "Bryanskaya_oblast", "Vladimirskaya_oblast", "Lipetskaya_oblast", "Respublica_Dagestan", "Kemerovskaya_oblast", "Novosibirskaya_oblast"];
+regions = ["Sahalinskaya_oblast", "Evreyskaya_avt_oblast", "Chukotskiy_avt_okrug"];
+regions_names = strrep(regions, '_', ' ');
+
+unique_years = unique(years);
+total_incomes = zeros([length(unique_years) length(regions)]);
+min_indeces = zeros([length(unique_years) length(regions)]);
+max_indeces = zeros([length(unique_years) length(regions)]);
+
+for n = 1:length(unique_years)
+    for i = 1:length(regions)
+        regionData = data.(regions(i));
+        regionData = strrep(regionData, ',', '.');
+        regionData = str2double(regionData);
+        year_indeces = find(years == years(n));
+        total_incomes(n, i) = sum(regionData(year_indeces));
+    end
+end
+
+figure;
+hold on;
+b = bar(unique_years, total_incomes);
+legend(regions_names);
+for n = 1:length(unique_years)
+    incomes = total_incomes(n, :);
+    min_indeces = find(incomes == min(incomes));
+    %set(b(min_indeces(1)),'Selected', true);
+    max_indeces = find(incomes == max(incomes));
+    %set(b(max_indeces(1)),'Selected', true);
+    
+    %a = b(min_indeces(1)).CData;
+    b(min_indeces(1)).FaceColor = 'flat';
+    b(min_indeces(1)).CData(n, :) = [1 1 1];
+    b(max_indeces(1)).FaceColor = 'flat';
+    b(max_indeces(1)).CData(n, :) = [0 0 0];
+end
+%hT = [];
+%for k = 1:length(b)
+    %hT=[hT,text(b(k).XData+b(k).XOffset,b(k).YData, "Text")];
+    %hT=[hT text(b(k).XData+b(k).XOffset, b(k).YData, num2str(b(k).YData.', '%.3f'))];
+%end
+%xt = get(gca, 'XTick');
+xlabel('year');
+ylabel('Total income');
+title('Total incomes of different regions');
+hold off;
+
+%% 3
+
+year2020_indices = find(years == 2020);
+
+shares = zeros(1, length(regions));
+
+for i = 1:length(regions)
+    regionData = data.(regions(i));
+    regionData = strrep(regionData, ',', '.');
+    regionData = str2double(regionData);
+    shares(i) = sum(regionData(year2020_indices));
+end
+
+figure;
+pie(shares, regions_names);
+title('Total incomes of regions in 2020');
+
+
+%% Задание 10
+
+%----Parameters-----------
+f = @(x, y) (x.^2 - 11).^2 + y.^3;
+%----End of parameters----
+
+x = linspace(-5, 5, 100);
+y = linspace(-5, 5, 100);
+contour_level = 10;
+
+[X, Y] = ndgrid(x, y);
+Z = f(X, Y);
+
+figure;
+hold on;
+contour(x, y, Z, contour_level, 'LineWidth', 2);
+%surf(X, Y, Z);
+%view(3);
+xlabel('x');
+ylabel('y');
+title('Contour of f(x, y)');
+hold off;
+
+
+%% Задание 11
+
+% polar coordinates
+theta = linspace(0, 2*pi, 100);
+r = linspace(0, 1, 100);
+[theta, r] = meshgrid(theta, r);
+
+x = r.*cos(theta);
+y = r.*sin(theta);
+z = 5*r;
+
+figure;
+surf(x, y, z);
+hold on;
+surf(x, y, -z);
+hold off;
+
+
+%% Задание 12
+clear
+
+alpha = 1.5;
+color = 'yellow';
+value = 0.8;
+delta = 0.1;
+
+drawSphere(alpha, color, value, delta);
+
+
+%% Задание 13
+clear;
+
+alphas = [10, 3, 1.2];
+colors = ["red", "yellow", "green"];
+edges = ["none", "none", "none"];
+delta = 0.2;
+
+drawManySpheres(alphas, colors, edges, delta);
+
